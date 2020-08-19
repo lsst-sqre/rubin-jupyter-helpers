@@ -36,7 +36,7 @@ LONG_DESCRIPTION = local_read("README.md")
 VERSION = get_version("%s/_version.py" % _path)
 AUTHOR = "Adam Thornton"
 AUTHOR_EMAIL = "athornton@lsst.org"
-URL = ("https://github.com/sqre-lsst/rubin-jupyter-helpers",)
+URL = "https://github.com/lsst-sqre/rubin-jupyter-helpers"
 LICENSE = "MIT"
 
 setuptools.setup(
