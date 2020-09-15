@@ -1,2 +1,0 @@
-eliot
-requests<3,>=2
