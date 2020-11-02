@@ -2,14 +2,19 @@
 Shared utility functions.
 """
 
+import base64
 import hashlib
 import inspect
+import json
 import logging
 import os
 import requests
 
 from collections import defaultdict
 from eliot.stdlib import EliotHandler
+from kubernetes import client
+from kubernetes.client import CoreV1Api
+from kubernetes.client.rest import ApiException
 
 
 def rreplace(s, old, new, occurrence):
@@ -320,3 +325,46 @@ def add_user_to_groups(uname, grpstr, groups=["lsst_lcl", "jovyan"]):
                 s_line = s_line + "," + uname
         g_str = g_str + s_line + "\n"
     return g_str
+
+
+def get_pull_secret(cfg):
+    if not (cfg.lab_repo_password and cfg.lab_repo_username):
+        return None  # These do not exist unless we have both auth parts
+    basic_auth = '{}:{}'.format(cfg.lab_repo_username,
+                                cfg.lab_repo_password).encode('utf-8')
+    authdata = {
+        "auths": {
+            cfg.lab_repo_host: {
+                "username": cfg.lab_repo_username,
+                "password": cfg.lab_repo_password,
+                "auth": base64.b64encode(basic_auth).decode('utf-8')
+            }
+        }
+    }
+    b64authdata = base64.b64encode(json.dumps(
+        authdata).encode('utf-8')).decode('utf-8')
+    pull_secret = client.V1Secret()
+    pull_secret.metadata = client.V1ObjectMeta(name='pull-secret')
+    pull_secret.type = "kubernetes.io/dockerconfigjson"
+    pull_secret.data = {".dockerconfigjson": b64authdata}
+    return pull_secret
+
+
+def get_pull_secret_reflist(pull_secret):
+    if not pull_secret:
+        return []
+    pull_secret_ref = client.V1LocalObjectReference(name='pull-secret')
+    return [pull_secret_ref]
+
+
+def ensure_pull_secret(secret, namespace=get_execution_namespace(),
+                       api=CoreV1Api()):
+    if not secret:
+        return
+    try:
+        api.create_namespaced_secret(
+            namespace=namespace,
+            body=secret)
+    except ApiException as e:
+        if e.status != 409:
+            raise
