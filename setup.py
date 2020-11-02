@@ -57,5 +57,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
     ],
     keywords="lsst",
-    install_requires=["eliot", "requests>=2,<3"],
+    install_requires=["eliot",
+                      "kubernetes",
+                      "requests>=2,<3"],
 )
