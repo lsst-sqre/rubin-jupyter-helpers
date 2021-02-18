@@ -201,7 +201,7 @@ def parse_access_token(endpoint=None, tokenfile=None, token=None, timeout=15):
     # Endpoint is constant in an ArgoCD-deployed cluster
     if not endpoint:
         endpoint = "http://gafaelfawr-service.gafaelfawr:8080/auth/analyze"
-    resp = requests.post(endpoint, data={"token": token}, timeout=timeout)
+    resp = requests.post(url=endpoint, data={"token": token}, timeout=timeout)
     rj = resp.json()
     p_resp = rj["token"]
     if not p_resp["valid"]:
