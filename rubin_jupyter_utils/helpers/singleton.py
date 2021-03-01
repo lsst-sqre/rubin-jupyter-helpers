@@ -4,7 +4,7 @@
 
 class Singleton(type):
     """Singleton metaclass.  Create a Singleton class with:
-        Class Foo(metaclass=Singleton)
+    Class Foo(metaclass=Singleton)
     """
 
     _instances = {}

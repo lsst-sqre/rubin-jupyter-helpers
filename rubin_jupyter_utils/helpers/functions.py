@@ -27,8 +27,7 @@ def rreplace(s, old, new, occurrence):
 
 
 def sanitize_dict(input_dict, sensitive_fields):
-    """Remove sensitive content.  Useful for logging.
-    """
+    """Remove sensitive content.  Useful for logging."""
     retval = {}
     if not input_dict:
         return retval
@@ -40,8 +39,7 @@ def sanitize_dict(input_dict, sensitive_fields):
 
 
 def get_execution_namespace():
-    """Return Kubernetes namespace of this container.
-    """
+    """Return Kubernetes namespace of this container."""
     ns_path = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
     if os.path.exists(ns_path):
         with open(ns_path) as f:
@@ -50,8 +48,7 @@ def get_execution_namespace():
 
 
 def make_logger(name=None, level=None):
-    """Create a logger with LSST-appropriate characteristics.
-    """
+    """Create a logger with LSST-appropriate characteristics."""
     if name is None:
         # Get name of caller's class.
         #  From https://stackoverflow.com/questions/17065086/
@@ -145,14 +142,12 @@ def floatify(item, default=0.0):
 
 
 def intify(item, default=0):
-    """floatify, but for ints.
-    """
+    """floatify, but for ints."""
     return int(floatify(item, default))
 
 
 def list_duplicates(seq):
-    """List duplicate items from a sequence.
-    """
+    """List duplicate items from a sequence."""
     # https://stackoverflow.com/questions/5419204
     tally = defaultdict(list)
     for i, item in enumerate(seq):
@@ -161,8 +156,7 @@ def list_duplicates(seq):
 
 
 def list_digest(inp_list):
-    """Return a digest to uniquely identify a list.
-    """
+    """Return a digest to uniquely identify a list."""
     if type(inp_list) is not list:
         raise TypeError("list_digest only works on lists!")
     if not inp_list:
@@ -172,8 +166,7 @@ def list_digest(inp_list):
 
 
 def get_access_token(tokenfile=None):
-    """Determine the access token from the mounted secret or environment.
-    """
+    """Determine the access token from the mounted secret or environment."""
     tok = None
     hdir = os.environ.get("HOME", None)
     if hdir:
@@ -192,8 +185,7 @@ def get_access_token(tokenfile=None):
 
 
 def parse_access_token(endpoint=None, tokenfile=None, token=None, timeout=15):
-    """Rely on gafaelfawr to validate and parse the access token.
-    """
+    """Rely on gafaelfawr to validate and parse the access token."""
     if not token:
         token = get_access_token(tokenfile=tokenfile)
     if not token:
@@ -327,22 +319,24 @@ def add_user_to_groups(uname, grpstr, groups=["lsst_lcl", "jovyan"]):
     return g_str
 
 
-def build_pull_secret(cfg, pull_secret_name='pull-secret'):
+def build_pull_secret(cfg, pull_secret_name="pull-secret"):
     if not (cfg.lab_repo_password and cfg.lab_repo_username):
         return None  # These do not exist unless we have both auth parts
-    basic_auth = '{}:{}'.format(cfg.lab_repo_username,
-                                cfg.lab_repo_password).encode('utf-8')
+    basic_auth = "{}:{}".format(
+        cfg.lab_repo_username, cfg.lab_repo_password
+    ).encode("utf-8")
     authdata = {
         "auths": {
             cfg.lab_repo_host: {
                 "username": cfg.lab_repo_username,
                 "password": cfg.lab_repo_password,
-                "auth": base64.b64encode(basic_auth).decode('utf-8')
+                "auth": base64.b64encode(basic_auth).decode("utf-8"),
             }
         }
     }
-    b64authdata = base64.b64encode(json.dumps(
-        authdata).encode('utf-8')).decode('utf-8')
+    b64authdata = base64.b64encode(
+        json.dumps(authdata).encode("utf-8")
+    ).decode("utf-8")
     pull_secret = client.V1Secret()
     pull_secret.metadata = client.V1ObjectMeta(name=pull_secret_name)
     pull_secret.type = "kubernetes.io/dockerconfigjson"
@@ -350,29 +344,29 @@ def build_pull_secret(cfg, pull_secret_name='pull-secret'):
     return pull_secret
 
 
-def get_pull_secret_reflist(pull_secret_name='pull_secret'):
+def get_pull_secret_reflist(pull_secret_name="pull_secret"):
     if not pull_secret_name:
         return []
     pull_secret_ref = client.V1LocalObjectReference(name=pull_secret_name)
     return [pull_secret_ref]
 
 
-def get_pull_secret(pull_secret_name='pull_secret', api=CoreV1Api()):
+def get_pull_secret(pull_secret_name="pull_secret", api=CoreV1Api()):
     if not pull_secret_name:
         return
-    secret = api.read_namespaced_secret(pull_secret_name,
-                                        get_execution_namespace())
+    secret = api.read_namespaced_secret(
+        pull_secret_name, get_execution_namespace()
+    )
     return secret
 
 
-def ensure_pull_secret(secret, namespace=get_execution_namespace(),
-                       api=CoreV1Api()):
+def ensure_pull_secret(
+    secret, namespace=get_execution_namespace(), api=CoreV1Api()
+):
     if not secret:
         return
     try:
-        api.create_namespaced_secret(
-            namespace=namespace,
-            body=secret)
+        api.create_namespaced_secret(namespace=namespace, body=secret)
     except ApiException as e:
         if e.status != 409:
             raise
