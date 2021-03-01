@@ -327,7 +327,7 @@ def add_user_to_groups(uname, grpstr, groups=["lsst_lcl", "jovyan"]):
     return g_str
 
 
-def get_pull_secret(cfg):
+def build_pull_secret(cfg, pull_secret_name='pull-secret'):
     if not (cfg.lab_repo_password and cfg.lab_repo_username):
         return None  # These do not exist unless we have both auth parts
     basic_auth = '{}:{}'.format(cfg.lab_repo_username,
@@ -344,17 +344,25 @@ def get_pull_secret(cfg):
     b64authdata = base64.b64encode(json.dumps(
         authdata).encode('utf-8')).decode('utf-8')
     pull_secret = client.V1Secret()
-    pull_secret.metadata = client.V1ObjectMeta(name='pull-secret')
+    pull_secret.metadata = client.V1ObjectMeta(name=pull_secret_name)
     pull_secret.type = "kubernetes.io/dockerconfigjson"
     pull_secret.data = {".dockerconfigjson": b64authdata}
     return pull_secret
 
 
-def get_pull_secret_reflist(pull_secret):
-    if not pull_secret:
+def get_pull_secret_reflist(pull_secret_name='pull_secret'):
+    if not pull_secret_name:
         return []
-    pull_secret_ref = client.V1LocalObjectReference(name='pull-secret')
+    pull_secret_ref = client.V1LocalObjectReference(name=pull_secret_name)
     return [pull_secret_ref]
+
+
+def get_pull_secret(pull_secret_name='pull_secret', api=CoreV1Api()):
+    if not pull_secret_name:
+        return
+    secret = api.read_namespaced_secret(pull_secret_name,
+                                        get_execution_namespace())
+    return secret
 
 
 def ensure_pull_secret(secret, namespace=get_execution_namespace(),

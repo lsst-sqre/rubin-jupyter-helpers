@@ -21,9 +21,10 @@ from .functions import (
     add_user_to_groups,
     get_supplemental_gids,
     resolve_groups,
+    build_pull_secret,
     get_pull_secret,
     get_pull_secret_reflist,
-    ensure_pull_secret
+    ensure_pull_secret,
 )
 from .singleton import Singleton
 from ._version import __version__
@@ -49,6 +50,7 @@ all = [
     add_user_to_groups,
     get_supplemental_gids,
     resolve_groups,
+    build_pull_secret,
     get_pull_secret,
     get_pull_secret_reflist,
     ensure_pull_secret,
