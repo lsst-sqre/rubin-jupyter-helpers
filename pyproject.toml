@@ -1,0 +1,48 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "setuptools_scm[toml]>=3.4"
+]
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools_scm]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py39,coverage-report,typing,lint
+isolated_build = True
+
+[testenv:lint]
+description = Lint codebase by running pre-commit (Black, isort, Flake8).
+skip_install = true
+deps =
+    pre-commit
+commands = pre-commit run --all-files
+
+"""
+
+[tool.black]
+line-length = 79
+target-version = ['py38']
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | build
+  | dist
+)/
+'''
+# Use single-quoted strings so TOML treats the string like a Python r-string
+# Multi-line strings are implicitly treated by black as regular expressions
+
+[tool.isort]
+include_trailing_comma = true
+multi_line_output = 3
+known_first_party = ["rubin_jupyter_utils", "tests"]
+skip = ["docs/conf.py"]

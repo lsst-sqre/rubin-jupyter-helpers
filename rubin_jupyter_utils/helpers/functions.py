@@ -15,7 +15,8 @@ from eliot.stdlib import EliotHandler
 from kubernetes import client
 from kubernetes.client import CoreV1Api
 from kubernetes.client.rest import ApiException
-
+from kubernetes.config import load_incluster_config, load_kube_config
+from kubernetes.config.config_exception import ConfigException
 
 def rreplace(s, old, new, occurrence):
     """Convenience function from:
@@ -165,7 +166,7 @@ def list_digest(inp_list):
     return hashlib.sha256(" ".join(inp_list).encode("utf-8")).hexdigest()
 
 
-def get_access_token(tokenfile=None):
+def get_access_token(tokenfile=None, log=None):
     """Determine the access token from the mounted secret or environment."""
     tok = None
     hdir = os.environ.get("HOME", None)
@@ -177,7 +178,8 @@ def get_access_token(tokenfile=None):
             with open(tokfile, "r") as f:
                 tok = f.read().replace("\n", "")
         except Exception as exc:
-            log = make_logger()
+            if not log:
+                log = make_logger()
             log.warn("Could not read tokenfile '{}': {}".format(tokfile, exc))
     if not tok:
         tok = os.environ.get("ACCESS_TOKEN", None)
@@ -319,17 +321,29 @@ def add_user_to_groups(uname, grpstr, groups=["lsst_lcl", "jovyan"]):
     return g_str
 
 
-def build_pull_secret(cfg, pull_secret_name="pull-secret"):
-    if not (cfg.lab_repo_password and cfg.lab_repo_username):
+def load_k8s_config(log=None):
+    try:
+        load_incluster_config()
+    except ConfigException:
+        if not log:
+            log=make_logger()
+        log.warning("In-cluster config failed! Falling back to kube config.")
+        try:
+            load_kube_config()
+        except ValueError as exc:
+            log.error("Failed to load k8s config: {}".format(exc))
+            raise
+
+
+def build_pull_secret(username, password, pull_secret_name="pull-secret"):
+    if not (username and password):
         return None  # These do not exist unless we have both auth parts
-    basic_auth = "{}:{}".format(
-        cfg.lab_repo_username, cfg.lab_repo_password
-    ).encode("utf-8")
+    basic_auth = "{}:{}".format(username, password).encode("utf-8")
     authdata = {
         "auths": {
             cfg.lab_repo_host: {
-                "username": cfg.lab_repo_username,
-                "password": cfg.lab_repo_password,
+                "username": username,
+                "password": password,
                 "auth": base64.b64encode(basic_auth).decode("utf-8"),
             }
         }
@@ -344,29 +358,48 @@ def build_pull_secret(cfg, pull_secret_name="pull-secret"):
     return pull_secret
 
 
-def get_pull_secret_reflist(pull_secret_name="pull_secret"):
+def get_pull_secret(pull_secret_name="pull-secret", api=None, log=None):
+    if not pull_secret_name:
+        return
+    ns = get_execution_namespace()
+    if not api:
+        load_k8s_config()
+        api=CoreV1Api()
+    try:
+        secret = api.read_namespaced_secret(pull_secret_name, ns)
+    except ApiException as e:
+        if not log:
+            log = make_logger()
+        log.error(f"Couldn't read secret {pull_secret_name} " +
+                  f" in namespace {ns}: {e}")
+    return secret
+
+
+def get_pull_secret_reflist(pull_secret_name="pull-secret"):
     if not pull_secret_name:
         return []
     pull_secret_ref = client.V1LocalObjectReference(name=pull_secret_name)
     return [pull_secret_ref]
 
 
-def get_pull_secret(pull_secret_name="pull_secret", api=CoreV1Api()):
-    if not pull_secret_name:
-        return
-    secret = api.read_namespaced_secret(
-        pull_secret_name, get_execution_namespace()
-    )
-    return secret
-
-
-def ensure_pull_secret(
-    secret, namespace=get_execution_namespace(), api=CoreV1Api()
-):
+def ensure_pull_secret(secret, namespace=get_execution_namespace(), api=None,
+                       log=None):
     if not secret:
         return
+    if not api:
+        load_k8s_config()
+        api=CoreV1Api()
     try:
+        name = secret.metadata.name
+        # Give secret new metadata; lots of read-only stuff in the existing
+        #  secret metadata.
+        secret.metadata = client.V1ObjectMeta(name=name,
+                                              namespace=namespace)
         api.create_namespaced_secret(namespace=namespace, body=secret)
     except ApiException as e:
+        if not log:
+            log = make_logger()
         if e.status != 409:
+            log.error("Failed to create pull secret: {}".format(e))
             raise
+        log.info(f"Pull secret already exists in namespace {namespace}")
