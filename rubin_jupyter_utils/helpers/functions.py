@@ -18,6 +18,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes.config import load_incluster_config, load_kube_config
 from kubernetes.config.config_exception import ConfigException
 
+
 def rreplace(s, old, new, occurrence):
     """Convenience function from:
     https://stackoverflow.com/questions/2556108/\
@@ -326,7 +327,7 @@ def load_k8s_config(log=None):
         load_incluster_config()
     except ConfigException:
         if not log:
-            log=make_logger()
+            log = make_logger()
         log.warning("In-cluster config failed! Falling back to kube config.")
         try:
             load_kube_config()
@@ -364,14 +365,16 @@ def get_pull_secret(pull_secret_name="pull-secret", api=None, log=None):
     ns = get_execution_namespace()
     if not api:
         load_k8s_config()
-        api=CoreV1Api()
+        api = CoreV1Api()
     try:
         secret = api.read_namespaced_secret(pull_secret_name, ns)
     except ApiException as e:
         if not log:
             log = make_logger()
-        log.error(f"Couldn't read secret {pull_secret_name} " +
-                  f" in namespace {ns}: {e}")
+        log.error(
+            f"Couldn't read secret {pull_secret_name} "
+            + f" in namespace {ns}: {e}"
+        )
     return secret
 
 
@@ -382,19 +385,19 @@ def get_pull_secret_reflist(pull_secret_name="pull-secret"):
     return [pull_secret_ref]
 
 
-def ensure_pull_secret(secret, namespace=get_execution_namespace(), api=None,
-                       log=None):
+def ensure_pull_secret(
+    secret, namespace=get_execution_namespace(), api=None, log=None
+):
     if not secret:
         return
     if not api:
         load_k8s_config()
-        api=CoreV1Api()
+        api = CoreV1Api()
     try:
         name = secret.metadata.name
         # Give secret new metadata; lots of read-only stuff in the existing
         #  secret metadata.
-        secret.metadata = client.V1ObjectMeta(name=name,
-                                              namespace=namespace)
+        secret.metadata = client.V1ObjectMeta(name=name, namespace=namespace)
         api.create_namespaced_secret(namespace=namespace, body=secret)
     except ApiException as e:
         if not log:
