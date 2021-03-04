@@ -363,6 +363,7 @@ def get_pull_secret(pull_secret_name="pull-secret", api=None, log=None):
     if not pull_secret_name:
         return
     ns = get_execution_namespace()
+    secret = None
     if not api:
         load_k8s_config()
         api = CoreV1Api()
@@ -375,6 +376,7 @@ def get_pull_secret(pull_secret_name="pull-secret", api=None, log=None):
             f"Couldn't read secret {pull_secret_name} "
             + f" in namespace {ns}: {e}"
         )
+        raise
     return secret
 
 
