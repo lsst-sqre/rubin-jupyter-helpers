@@ -2,24 +2,7 @@
 Shared utility functions.
 """
 
-import base64
-import datetime
 import hashlib
-import inspect
-import json
-import logging
-import os
-import requests
-import time
-
-from collections import defaultdict
-from eliot.stdlib import EliotHandler
-from kubernetes import client
-from kubernetes.client import CoreV1Api
-from kubernetes.client.rest import ApiException
-from kubernetes.config import load_incluster_config, load_kube_config
-from kubernetes.config.config_exception import ConfigException
-from math import log
 
 
 def get_fake_gid(grpname):
@@ -114,15 +97,6 @@ def _map_supplemental_gids(claims, strict_ldap=False):
         if gid:
             retval.append((gname, gid))
     return retval
-
-
-def assemble_gids(claims, strict_ldap=False):
-    """Take the claims data and return the string to be used for be used
-    for provisioning the user and groups (in sudo mode).
-    """
-    glist = _map_supplemental_gids(claims, strict_ldap=strict_ldap)
-    gidlist = ["{}:{}".format(x[0], x[1]) for x in glist]
-    return ",".join(gidlist)
 
 
 def add_user_to_groups(uname, grpstr, groups=["lsst_lcl", "jovyan"]):

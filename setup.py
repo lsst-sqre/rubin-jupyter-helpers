@@ -56,5 +56,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
     ],
     keywords="lsst",
-    install_requires=["eliot", "kubernetes", "requests>=2,<3"],
+    install_requires=["eliot", "kubernetes", "pyjwt", "requests>=2,<3"],
+    package_data={"": ["static/*"]},
+    include_package_data=True,
 )

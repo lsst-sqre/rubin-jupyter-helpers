@@ -2,24 +2,9 @@
 Shared utility functions.
 """
 
-import base64
-import datetime
 import hashlib
-import inspect
-import json
-import logging
-import os
-import requests
-import time
 
 from collections import defaultdict
-from eliot.stdlib import EliotHandler
-from kubernetes import client
-from kubernetes.client import CoreV1Api
-from kubernetes.client.rest import ApiException
-from kubernetes.config import load_incluster_config, load_kube_config
-from kubernetes.config.config_exception import ConfigException
-from math import log
 
 
 def rreplace(s, old, new, occurrence):
