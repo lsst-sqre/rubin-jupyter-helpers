@@ -14,6 +14,7 @@ from kubernetes.config.config_exception import ConfigException
 
 from .log import make_logger
 
+
 def get_execution_namespace():
     """Return Kubernetes namespace of this container."""
     ns_path = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"

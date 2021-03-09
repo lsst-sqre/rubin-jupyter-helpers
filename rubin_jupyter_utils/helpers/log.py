@@ -7,6 +7,7 @@ import logging
 
 from eliot.stdlib import EliotHandler
 
+
 def sanitize_dict(input_dict, sensitive_fields):
     """Remove sensitive content.  Useful for logging."""
     retval = {}

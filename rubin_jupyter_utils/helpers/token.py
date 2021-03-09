@@ -7,6 +7,7 @@ import requests
 
 from .log import make_logger
 
+
 def get_access_token(tokenfile=None, log=None):
     """Determine the access token from the mounted secret or environment."""
     tok = None
