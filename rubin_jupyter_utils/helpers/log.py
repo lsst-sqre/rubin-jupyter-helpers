@@ -33,6 +33,7 @@ def sanitize_dict(input_dict, sensitive_fields):
             retval[field] = "[redacted]"
     return retval
 
+
 def make_logger(name=None, level=None):
     """Create a logger with LSST-appropriate characteristics."""
     if name is None:

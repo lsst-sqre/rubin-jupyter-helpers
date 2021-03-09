@@ -125,7 +125,6 @@ def assemble_gids(claims, strict_ldap=False):
     return ",".join(gidlist)
 
 
-
 def add_user_to_groups(uname, grpstr, groups=["lsst_lcl", "jovyan"]):
     """Take a user name (a string) and a base group file (as a string) and
     inject the user into the appropriate groups, given in the groups

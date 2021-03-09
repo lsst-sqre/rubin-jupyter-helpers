@@ -23,8 +23,7 @@ from math import log
 
 
 def call_moneypenny(dossier, endpoint=None, token=None):
-    """Order Moneypenny to commission an agent.
-    """
+    """Order Moneypenny to commission an agent."""
     if not token:
         # Mint an admin token with the gafaelfawr signing key; see mobu's
         #  User.generate_token()
@@ -47,7 +46,7 @@ def call_moneypenny(dossier, endpoint=None, token=None):
         count += 1
         resp = requests.get(f"{endpoint}/{uname}")
         status = resp.status
-        if status==200 or 404:
+        if status == 200 or 404:
             return
         if status != 202:
             raise RuntimeError(f"Unexpected status from Moneypenny: {status}")

@@ -21,6 +21,7 @@ from kubernetes.config import load_incluster_config, load_kube_config
 from kubernetes.config.config_exception import ConfigException
 from math import log
 
+
 def get_execution_namespace():
     """Return Kubernetes namespace of this container."""
     ns_path = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
@@ -44,13 +45,14 @@ def load_k8s_config(log=None):
             raise
 
 
-def build_pull_secret(username, password, host=None,
-                      pull_secret_name="pull-secret"):
+def build_pull_secret(
+    username, password, host=None, pull_secret_name="pull-secret"
+):
     if not (username and password):
         return None  # These do not exist unless we have both auth parts
     # Use "registry.hub.docker.com" as canonical.
     if not host or host == "docker.io" or host == "index.docker.io":
-        host="registry.hub.docker.com"
+        host = "registry.hub.docker.com"
     basic_auth = "{}:{}".format(username, password).encode("utf-8")
     authdata = {
         "auths": {
