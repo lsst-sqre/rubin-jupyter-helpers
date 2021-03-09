@@ -11,7 +11,7 @@
     {
       "name": "wheel",
       "id": 0
-    },
+    }
   ],
-  "scope": "exec:admin",
+  "scope": "exec:admin"
 }

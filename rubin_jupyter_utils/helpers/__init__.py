@@ -27,6 +27,7 @@ from .log import (
 
 from .moneypenny import (
     call_moneypenny,
+    dossier_from_auth_state,
 )
 
 from .token import (
