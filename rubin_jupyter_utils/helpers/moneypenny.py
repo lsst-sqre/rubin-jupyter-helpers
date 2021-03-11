@@ -28,7 +28,7 @@ def call_moneypenny(
 ):
     """Order Moneypenny to commission an agent."""
     if not log:
-        log=make_logger()
+        log = make_logger()
     if not token:
         # Mint an admin token with the gafaelfawr signing key; see mobu's
         #  User.generate_token()
@@ -36,7 +36,7 @@ def call_moneypenny(
             template_file=template_file,
             private_key_file=private_key_file,
             url=url,
-            log=log
+            log=log,
         )
     # Use external endpoint if we know it, otherwise use the internal one,
     #  which should be constant with respect to an origin inside the cluster.
@@ -46,9 +46,9 @@ def call_moneypenny(
         else:
             endpoint = f"https://{FQDN}/moneypenny"
     headers = {"Authorization": f"Bearer {token}"}
-    com_ep=f"{endpoint}/commission"
+    com_ep = f"{endpoint}/commission"
     log.debug(f"About to post to {com_ep}: {dossier}.")
-    resp=requests.post(
+    resp = requests.post(
         f"{com_ep}", json=dossier, headers=headers, timeout=10
     )
     log.debug(f"POST got {resp.status_code}")
@@ -76,7 +76,7 @@ def _mint_moneypenny_token(
     template_file=None, private_key_file=None, url=None, log=None
 ):
     if not log:
-        log=make_logger()
+        log = make_logger()
     if not url:
         if not FQDN:
             raise RuntimeError(
@@ -117,14 +117,15 @@ def _mint_moneypenny_token(
 
 def dossier_from_auth_state(auth_state, log=None):
     if not log:
-        log=make_logger()
+        log = make_logger()
     clm = auth_state["claims"]
-    log.debug("Auth state claims: " + json.dumps(
-        clm, indent=4, sort_keys=True))
+    log.debug(
+        "Auth state claims: " + json.dumps(clm, indent=4, sort_keys=True)
+    )
     dossier = {
         "username": clm["uid"],
         "uid": int(clm["uidNumber"]),
-        "groups": [ x for x in clm["isMemberOf"] ]
+        "groups": [x for x in clm["isMemberOf"]],
     }
     log.debug("Dossier: " + json.dumps(dossier, indent=4, sort_keys=True))
     return dossier
