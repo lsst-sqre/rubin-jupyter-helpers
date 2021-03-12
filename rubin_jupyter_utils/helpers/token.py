@@ -41,8 +41,9 @@ def parse_access_token(endpoint=None, tokenfile=None, token=None, timeout=15):
         if not fqdn:
             endpoint = "http://gafaelfawr-service.gafaelfawr:8080/auth/analyze"
         else:
-            endpoint = f"https:{fqdn}/gafaelfawr/auth/analyze"
+            endpoint = f"https://{fqdn}/auth/analyze"
     resp = requests.post(endpoint, data={"token": token}, timeout=timeout)
+    resp.raise_for_status()
     rj = resp.json()
     p_resp = rj["token"]
     if not p_resp["valid"]:
