@@ -8,6 +8,10 @@ from pathlib import Path
 from .log import make_logger
 
 
+class TokenNotFoundError(Exception):
+    """No access token was found."""
+
+
 def get_access_token(tokenfile=None, log=None):
     """Determine the access token from the mounted configmap (nublado2),
     secret (nublado1), or environment (either).  Prefer the mounted version
@@ -16,11 +20,12 @@ def get_access_token(tokenfile=None, log=None):
     tok = None
     if tokenfile:
         # If a path was specified, trust it.
-        token_path=Path(tokenfile)
-        return token_path.read_text()
+        tok=token_path.read_text(Path(tokenfile))
+        tried_path = tokenfile
     else:
         # Try the default token paths, nublado2 first, then nublado1
         n2_tokenfile = "/opt/lsst/software/jupyterlab/environment/ACCESS_TOKEN"
+        tried_path=n2_tokenfile
         token_path=Path(n2_tokenfile)
         try:
             tok=token_path.read_text()
@@ -34,6 +39,7 @@ def get_access_token(tokenfile=None, log=None):
             hdir = os.environ.get("HOME", None)
             if hdir:
                 tokfile = hdir + "/.access_token"
+                tried_path = f"{tried_path}, or {tokfile}"
                 token_path=Path(tokfile)
             try:
                 tok=token_path.read_text()
@@ -41,12 +47,12 @@ def get_access_token(tokenfile=None, log=None):
                 # OK, it's not mounted at all.  Fall back to the environment.
                 pass
     if not tok:
-        if not log:
-            log = make_logger()
-        log.warn("Could not read mounted tokenfile; trying environment.")
         tok = os.environ.get("ACCESS_TOKEN", None)
     if not tok:
-        log.warn("Could not find access token at all!")
+        if not log:
+            log = make_logger()
+        log.error(f"Could not find in env:ACCESS_TOKEN nor in {tried_path}")
+        raise TokenNotFoundError
     return tok
 
 
