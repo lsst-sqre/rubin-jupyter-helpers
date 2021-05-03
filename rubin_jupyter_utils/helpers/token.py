@@ -4,27 +4,52 @@ Shared utility functions.
 
 import os
 import requests
+from pathlib import Path
 
-from .log import make_logger
+
+class TokenNotFoundError(Exception):
+    """No access token was found."""
 
 
 def get_access_token(tokenfile=None, log=None):
-    """Determine the access token from the mounted secret or environment."""
+    """Determine the access token from the mounted configmap (nublado2),
+    secret (nublado1), or environment (either).  Prefer the mounted version
+    since it can be updated, while the environment variable stays at whatever
+    it was when the process was started."""
     tok = None
-    hdir = os.environ.get("HOME", None)
-    if hdir:
-        if not tokenfile:
-            # FIXME we should make this instance-dependent
-            tokfile = hdir + "/.access_token"
+    if tokenfile:
+        # If a path was specified, trust it.
+        tok=token_path.read_text(Path(tokenfile))
+        tried_path = tokenfile
+    else:
+        # Try the default token paths, nublado2 first, then nublado1
+        n2_tokenfile = "/opt/lsst/software/jupyterlab/environment/ACCESS_TOKEN"
+        tried_path=n2_tokenfile
+        token_path=Path(n2_tokenfile)
         try:
-            with open(tokfile, "r") as f:
-                tok = f.read().replace("\n", "")
-        except Exception as exc:
-            if not log:
-                log = make_logger()
-            log.warn("Could not read tokenfile '{}': {}".format(tokfile, exc))
+            tok=token_path.read_text()
+        except:
+            # Not there.  Let's try the nublado1 path.  Maybe this is an
+            #  instance we haven't upgraded yet.  Swallow the exception and
+            #  try the older mount.
+            pass
+        if not tok:
+            # We'll try nublado1: ${HOME}/.access_token
+            hdir = os.environ.get("HOME", None)
+            if hdir:
+                tokfile = hdir + "/.access_token"
+                tried_path = f"{tried_path}, or {tokfile}"
+                token_path=Path(tokfile)
+            try:
+                tok=token_path.read_text()
+            except:
+                # OK, it's not mounted at all.  Fall back to the environment.
+                pass
     if not tok:
         tok = os.environ.get("ACCESS_TOKEN", None)
+    if not tok:
+        raise TokenNotFoundError(
+            f"Could not find token in env:ACCESS_TOKEN nor in {tried_path}")
     return tok
 
 
