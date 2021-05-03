@@ -5,7 +5,6 @@ Shared utility functions.
 import os
 import requests
 from pathlib import Path
-from .log import make_logger
 
 
 class TokenNotFoundError(Exception):
@@ -49,10 +48,8 @@ def get_access_token(tokenfile=None, log=None):
     if not tok:
         tok = os.environ.get("ACCESS_TOKEN", None)
     if not tok:
-        if not log:
-            log = make_logger()
-        log.error(f"Could not find in env:ACCESS_TOKEN nor in {tried_path}")
-        raise TokenNotFoundError
+        raise TokenNotFoundError(
+            f"Could not find token in env:ACCESS_TOKEN nor in {tried_path}")
     return tok
 
 
